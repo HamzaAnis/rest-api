@@ -1,12 +1,10 @@
-package read
+package main
 
 import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
-
-	"github.com/davecgh/go-spew/spew"
 )
 
 //A struct to hold the json object
@@ -44,14 +42,18 @@ type FundRaiser struct {
 	Survey            string `json:Survey`
 }
 
-func readFile() {
+func readFile(lower int, upper int) []FundRaiser {
 	var data []FundRaiser
-	raw, err := ioutil.ReadFile("files/Fundraiser_900374.txt")
-	// fmt.Println(string(raw))
-	if err != nil {
-		fmt.Println(err.Error)
-		os.Exit(1)
+	for i := lower; i <= upper; i++ {
+		var d []FundRaiser
+		file := fmt.Sprintf("%s%d%s", "files/Fundraiser_", i, ".txt")
+		raw, err := ioutil.ReadFile(file)
+		if err != nil {
+			fmt.Println(err.Error)
+			os.Exit(1)
+		}
+		json.Unmarshal(raw, &d)
+		data = append(d, data...)
 	}
-	json.Unmarshal(raw, &data)
-	spew.Dump(data[0])
+	return data
 }
