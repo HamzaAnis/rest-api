@@ -5,6 +5,6 @@ import (
 )
 
 func main() {
-	jsonObjects := readFile(900374, 900375)
+	jsonObjects := readFile(900374, 900375, "files")
 	spew.Dump(jsonObjects)
 }

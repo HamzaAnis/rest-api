@@ -42,11 +42,14 @@ type FundRaiser struct {
 	Survey            string `json:Survey`
 }
 
-func readFile(lower int, upper int) []FundRaiser {
+//read files iterate over the files and read the file
+//It returns the slice of all the objects read from lower to upper in the format below
+func readFile(lower int, upper int, location string) []FundRaiser {
 	var data []FundRaiser
 	for i := lower; i <= upper; i++ {
 		var d []FundRaiser
-		file := fmt.Sprintf("%s%d%s", "files/Fundraiser_", i, ".txt")
+		//Format to read the file
+		file := fmt.Sprintf("%s%s%d%s", location, "/Fundraiser_", i, ".txt")
 		raw, err := ioutil.ReadFile(file)
 		if err != nil {
 			fmt.Println(err.Error)
