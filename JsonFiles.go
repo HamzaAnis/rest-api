@@ -56,7 +56,7 @@ func startRead(lower int, upper int, location string) []FundRaiser {
 		file := fmt.Sprintf("%s%s%d%s", location, "/Fundraiser_900375.", i, ".txt")
 		go readFile(file, dataChan, c)
 	}
-	for i := 1; i < 77; i++ {
+	for i := 1; i <= 77; i++ {
 		<-c
 	}
 	return data
@@ -78,8 +78,6 @@ func handleData(data *[]FundRaiser, dataChan <-chan []FundRaiser) {
 	for {
 		select {
 		case relay := <-dataChan:
-			fmt.Println(len(*data))
-			// spew.Dump(relay)
 			*data = append(relay, *data...)
 		}
 	}
