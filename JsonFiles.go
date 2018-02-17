@@ -44,19 +44,24 @@ type FundRaiser struct {
 
 //read files iterate over the files and read the file
 //It returns the slice of all the objects read from lower to upper in the format below
-func readFile(lower int, upper int, location string) []FundRaiser {
+func startRead(lower int, upper int, location string) []FundRaiser {
 	var data []FundRaiser
-	for i := lower; i <= upper; i++ {
-		var d []FundRaiser
+	for i := 1; i <= 77; i++ {
 		//Format to read the file
-		file := fmt.Sprintf("%s%s%d%s", location, "/Fundraiser_", i, ".txt")
-		raw, err := ioutil.ReadFile(file)
-		if err != nil {
-			fmt.Println(err.Error)
-			os.Exit(1)
-		}
-		json.Unmarshal(raw, &d)
+		file := fmt.Sprintf("%s%s%d%s", location, "/Fundraiser_900375.", i, ".txt")
+		d := readFile(file)
 		data = append(d, data...)
 	}
 	return data
+}
+func readFile(file string) []FundRaiser {
+	var d []FundRaiser
+	raw, err := ioutil.ReadFile(file)
+	if err != nil {
+		fmt.Println(err.Error)
+		os.Exit(1)
+	}
+	json.Unmarshal(raw, &d)
+	// spew.Dump(d)
+	return d
 }
