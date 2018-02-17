@@ -46,17 +46,22 @@ type FundRaiser struct {
 //It returns the slice of all the objects read from lower to upper in the format below
 func startRead(lower int, upper int, location string) []FundRaiser {
 	var data []FundRaiser
+	//A chan where the data will be sent
 	dataChan := make(chan []FundRaiser)
+	//A chan to wait for all the routines
+	c := make(chan struct{})
 	go handleData(&data, dataChan)
 	for i := 1; i <= 77; i++ {
 		//Format to read the file
 		file := fmt.Sprintf("%s%s%d%s", location, "/Fundraiser_900375.", i, ".txt")
-		d := readFile(file)
-		dataChan <- d
+		go readFile(file, dataChan, c)
+	}
+	for i := 1; i < 77; i++ {
+		<-c
 	}
 	return data
 }
-func readFile(file string) []FundRaiser {
+func readFile(file string, dataChan chan []FundRaiser, wait chan struct{}) {
 	var d []FundRaiser
 	raw, err := ioutil.ReadFile(file)
 	if err != nil {
@@ -65,7 +70,9 @@ func readFile(file string) []FundRaiser {
 	}
 	json.Unmarshal(raw, &d)
 	// spew.Dump(d)
-	return d
+	dataChan <- d
+	wait <- struct{}{} // signal that the routine has completed
+
 }
 func handleData(data *[]FundRaiser, dataChan <-chan []FundRaiser) {
 	for {
