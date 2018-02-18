@@ -8,7 +8,6 @@ import (
 	"math/big"
 	"os"
 	"time"
-	// "github.com/parnurzeal/gorequest"
 )
 
 type restAPI struct {
@@ -61,7 +60,7 @@ func (api restAPI) startRead(lower int, upper int, location string) {
 	//A chan to wait for all the routines
 	c := make(chan struct{})
 
-	go handleData(dataChan)
+	go api.handleData(dataChan)
 	for i := 1; i <= 2; i++ {
 		//Format to read the file
 		file := fmt.Sprintf("%s%s%d%s", location, "/Fundraiser_900375.", i, ".txt")
@@ -77,23 +76,31 @@ func (api restAPI) readFile(file string, dataChan chan string, wait chan struct{
 		fmt.Println(err.Error)
 		os.Exit(1)
 	}
-	fmt.Println("\t\tYESY", api.config[0].ApiEndPoint)
+	// fmt.Println("\t\tYESY", api.config[0].ApiEndPoint)
 	// spew.Dump(d)
 	dataChan <- string(raw)
 	wait <- struct{}{} // signal that the routine has completed
 
 }
-func handleData(dataChan <-chan string) {
+func (api restAPI) handleData(dataChan <-chan string) {
 	for {
 		select {
-		case relay := <-dataChan:
-			fmt.Println(relay)
-			fmt.Println()
-			// *data = append(relay, *data...)
+		case paylord := <-dataChan:
+			go makeRequest(paylord, api.config[0].ApiEndPoint, api.config[0].ApiKey, api.config[0].ContentType)
 		}
 	}
 }
 
-func makeRequest() {
-	// request:=gorequest.New()
+func makeRequest(paylord string, endpoint string, apiKey string, contentType string) {
+	request := gorequest.New()
+	fmt.Println("Calling")
+	_, body, err := request.Post(endpoint).Set("content-type", contentType).
+		Set("Authorization", apiKey).
+		End()
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println("Calling2")
+
+	fmt.Printf("Response Body: \n%s\n", body)
 }
