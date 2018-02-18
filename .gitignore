@@ -15,3 +15,7 @@
 
 #Workspace
 .vscode
+
+
+#API
+config.json
