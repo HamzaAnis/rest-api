@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/parnurzeal/gorequest"
-	"github.com/davecgh/go-spew/spew"
+	// "github.com/davecgh/go-spew/spew"
 )
 
 type restAPI struct {
@@ -26,8 +26,8 @@ type config struct {
 	Username    string `json:"Username"`
 	HostName    string `json:"HostName"`
 	Port        string `json:"Port"`
-	Start       int `json:"Start"`
-	End 		int `json:"End"`
+	Start       int `json:"StartFile"`
+	End 		int `json:"EndFile"`
 }
 
 func main() {
@@ -41,14 +41,13 @@ func main() {
 	fmt.Println(r.Binomial(1000, 10))
 	
 	//A main function
-	api.startRead(900374, 900375, "files")
+	api.startRead(api.config[0].Start, api.config[0].End)
 
-	elapsed := time.Since(start)
-	log.Printf("Binomial took %s", elapsed)
-
-	for i := 1; i <= 2; i++ {
+	for i := api.config[0].Start; i <=api.config[0].End; i++ {
 		<-api.complete
 	}
+	elapsed := time.Since(start)
+	log.Printf("Binomial took %s", elapsed)
 }
 
 
@@ -60,18 +59,18 @@ func readConfig() []config {
 		os.Exit(1)
 	}
 	json.Unmarshal(raw, &d)
-	spew.Dump(d)
+	// spew.Dump(d)
 	return d
 }
 //read files iterate over the files and read the file
 //It returns the slice of all the objects read from lower to upper in the format below
-func (api restAPI) startRead(lower int, upper int, location string) {
+func (api restAPI) startRead(lower int, upper int) {
 	//A chan where the data will be sent
 	dataChan := make(chan string)
 	go api.handleData(dataChan)
-	for i := 1; i <= 2; i++ {
+	for i := lower; i <= upper; i++ {
 		//Format to read the file
-		file := fmt.Sprintf("%s%s%d%s", location, "/Fundraiser_900375.", i, ".txt")
+		file := fmt.Sprintf("%s%d%s","files/Fundraiser_", i, ".txt")
 		go api.readFile(file, dataChan)
 	}
 
@@ -80,10 +79,7 @@ func (api restAPI) readFile(file string, dataChan chan string) {
 	raw, err := ioutil.ReadFile(file)
 	if err != nil {
 		fmt.Println(err.Error)
-		os.Exit(1)
 	}
-	// fmt.Println("\t\tYESY", api.config[0].ApiEndPoint)
-	// spew.Dump(d)
 	dataChan <- string(raw)
 	
 
