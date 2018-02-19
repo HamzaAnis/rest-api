@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/parnurzeal/gorequest"
+	"github.com/davecgh/go-spew/spew"
 )
 
 type restAPI struct {
@@ -25,33 +26,11 @@ type config struct {
 	Username    string `json:"Username"`
 	HostName    string `json:"HostName"`
 	Port        string `json:"Port"`
-	Start       string `json:"Start"`
-	End 		string `json:"End"`
+	Start       int `json:"Start"`
+	End 		int `json:"End"`
 }
 
-func readConfig() []config {
-	var d []config
-	raw, err := ioutil.ReadFile("config.json")
-	if err != nil {
-		fmt.Println(err.Error)
-		os.Exit(1)
-	}
-	json.Unmarshal(raw, &d)
-	// spew.Dump(d)
-	return d
-}
 func main() {
-	request := gorequest.New()
-	fmt.Println("Calling")
-	_, body, err := request.Post("http://qa-sc-a-api.entertainmentbook.com.au/api/1.0/epic/fundraisers/").Set("content-type", "application/json").
-		Set("Authorization", "KIsPsSSPP0fCW61aQF0iKeTtoZaNDPQmwSEPXOu94Bae3oRPfbwn8H5s9OVt99XIjSNBavaqSrU57pGetN0KolJ1YwcNfkqhzKK6").
-		End()
-	fmt.Println("Calling2")
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	fmt.Printf("Response Body: \n%s\n", body)
 	api := restAPI{
 		config: readConfig(),
 		complete:  make(chan struct{}),
@@ -72,6 +51,18 @@ func main() {
 	}
 }
 
+
+func readConfig() []config {
+	var d []config
+	raw, err := ioutil.ReadFile("config.json")
+	if err != nil {
+		fmt.Println(err.Error)
+		os.Exit(1)
+	}
+	json.Unmarshal(raw, &d)
+	spew.Dump(d)
+	return d
+}
 //read files iterate over the files and read the file
 //It returns the slice of all the objects read from lower to upper in the format below
 func (api restAPI) startRead(lower int, upper int, location string) {
