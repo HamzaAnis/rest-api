@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"math/big"
 	"os"
 	"time"
+	"strconv"
+	"encoding/csv"
 
 	"github.com/parnurzeal/gorequest"
 	// "github.com/davecgh/go-spew/spew"
@@ -15,7 +16,8 @@ import (
 
 type restAPI struct {
 	config []config
-	complete chan struct{}
+	complete chan []string
+	id int
 	//A chan to wait for all the routines
 }
 type config struct {
@@ -30,27 +32,45 @@ type config struct {
 	End 		int `json:"EndFile"`
 }
 
+var data=[][]string {}
 func main() {
 	api := restAPI{
 		config: readConfig(),
-		complete:  make(chan struct{}),
+		complete:  make(chan []string),
+		id:	0,
 	}
 
 	start := time.Now()
-	r := new(big.Int)
-	fmt.Println(r.Binomial(1000, 10))
 	
 	//A main function
 	api.startRead(api.config[0].Start, api.config[0].End)
 
 	for i := api.config[0].Start; i <=api.config[0].End; i++ {
-		<-api.complete
+		res:= <-api.complete
+		data=append(data,res)
 	}
+	writeCsv()
 	elapsed := time.Since(start)
-	log.Printf("Binomial took %s", elapsed)
+	log.Printf("It took %s", elapsed)
+	
 }
 
+func writeCsv(){
+	file, err := os.Create("result.csv")
+	if err != nil {
+        log.Fatal(err)
+	}    
+	defer file.Close()
 
+    writer := csv.NewWriter(file)
+    defer writer.Flush()
+
+    for _, value := range data {
+        err := writer.Write(value)
+		if err != nil {
+			log.Fatal(err)
+		}    }
+}
 func readConfig() []config {
 	var d []config
 	raw, err := ioutil.ReadFile("config.json")
@@ -73,7 +93,6 @@ func (api restAPI) startRead(lower int, upper int) {
 		file := fmt.Sprintf("%s%d%s","files/Fundraiser_", i, ".txt")
 		go api.readFile(file, dataChan)
 	}
-
 }
 func (api restAPI) readFile(file string, dataChan chan string) {
 	raw, err := ioutil.ReadFile(file)
@@ -88,21 +107,21 @@ func (api restAPI) handleData(dataChan <-chan string) {
 	for {
 		select {
 		case paylord := <-dataChan:
-			go makeRequest(paylord, api.config[0].ApiEndPoint, api.config[0].ApiKey, api.config[0].ContentType,api.complete)
+			api.id=api.id+1;
+			go makeRequest(paylord, api.config[0].ApiEndPoint, api.config[0].ApiKey, api.config[0].ContentType,api.complete,api.id)
 		}
 	}
 }
 
-func makeRequest(paylord string, endpoint string, apiKey string, contentType string,complete chan struct{}) {
+func makeRequest(paylord string, endpoint string, apiKey string, contentType string,complete chan []string,id int) {
 	request := gorequest.New()
-	fmt.Println("Calling")
 	_, body, err := request.Post(endpoint).Set("content-type", contentType).
 		Set("Authorization", apiKey).
 		End()
-	fmt.Println("Calling2")
 	if err != nil {
 		fmt.Println(err)
 	}
 	fmt.Printf("Response Body: \n%s\n", body)
-	complete <- struct{}{} // signal that the routine has completed
+	fmt.Println(strconv.Itoa(id))
+	complete <- []string{strconv.Itoa(id),time.Now().String(),body} // signal that the routine has completed
 }
