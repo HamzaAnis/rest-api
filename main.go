@@ -60,7 +60,9 @@ func main() {
 }
 
 func writeCsv() {
-	file, err := os.Create("result.csv")
+	t := time.Now()
+	filename:=t.Format("201-02-21-01-01-52")
+	file, err := os.Create(filename+".csv")
 	if err != nil {
 		log.Fatal(err)
 	}
