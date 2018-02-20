@@ -35,6 +35,7 @@ type config struct {
 var data = [][]string{}
 
 func main() {
+	log.Printf("Calls Started\n")
 	api := restAPI{
 		config:   readConfig(),
 		complete: make(chan []string),
@@ -52,9 +53,9 @@ func main() {
 	}
 	writeCsv()
 	elapsed := time.Since(start)
-	log.Printf("It took %s", elapsed)
+	log.Printf("It took %s\n", elapsed)
 
-	fmt.Printf("Press any key to continue...")
+	fmt.Printf("Press any key to exit...")
 	fmt.Scanf("%d")
 }
 
