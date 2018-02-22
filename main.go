@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/parnurzeal/gorequest"
@@ -25,12 +24,6 @@ type config struct {
 	ApiEndPoint string `json:"APiEndPoint"`
 	ApiKey      string `json:"ApiKey"`
 	ContentType string `json:"ContentType"`
-	Schema      string `json:"Schema"`
-	Username    string `json:"Username"`
-	HostName    string `json:"HostName"`
-	Port        string `json:"Port"`
-	Start       int    `json:"StartFile"`
-	End         int    `json:"EndFile"`
 	Location    string `json:"Location"`
 }
 
@@ -58,7 +51,7 @@ func main() {
 		}
     }
 	//A main function
-	api.startRead(api.config[0].Start, files)
+	api.startRead(files)
 
 	for i := 0; i < totalFile; i++ {
 		res := <-api.complete
@@ -105,9 +98,8 @@ func readConfig() []config {
 	return d
 }
 
-//read files iterate over the files and read the file
-//It returns the slice of all the objects read from lower to upper in the format below
-func (api restAPI) startRead(lower int, files []os.FileInfo) {
+//read files iterate over the files in a directory
+func (api restAPI) startRead(files []os.FileInfo) {
 	dataChan := make(chan string)
 	go api.handleData(dataChan)
 
@@ -118,26 +110,29 @@ func (api restAPI) startRead(lower int, files []os.FileInfo) {
     }
 }
 func (api restAPI) readFile(file string, dataChan chan string) {
-
-	fmt.Println("It is : ",api.config[0].Location+file)
+	fmt.Println("Processing",api.config[0].Location+file)
 	raw, err := ioutil.ReadFile(api.config[0].Location+file)
 	if err != nil {
 		fmt.Println(err)
 	}
+
+	requestId:=strings.Split(file,"_")[1]
 	dataChan <- string(raw)
+	dataChan <- string(strings.Split(requestId,".")[0]) //Writing id to the chan
+
 
 }
 func (api restAPI) handleData(dataChan <-chan string) {
 	for {
 		select {
 		case paylord := <-dataChan:
-			api.id = api.id + 1
-			go makeRequest(paylord, api.config[0].ApiEndPoint, api.config[0].ApiKey, api.config[0].ContentType, api.complete, api.id)
+			ID := <-dataChan
+			go makeRequest(paylord, api.config[0].ApiEndPoint, api.config[0].ApiKey, api.config[0].ContentType, api.complete, ID)
 		}
 	}
 }
 
-func makeRequest(paylord string, endpoint string, apiKey string, contentType string, complete chan []string, id int) {
+func makeRequest(paylord string, endpoint string, apiKey string, contentType string, complete chan []string, id string) {
 	request := gorequest.New()
 	_, body, err := request.Post(endpoint).Set("content-type", contentType).
 		Set("Authorization", apiKey).
@@ -146,5 +141,5 @@ func makeRequest(paylord string, endpoint string, apiKey string, contentType str
 		fmt.Println(err)
 	}
 	fmt.Printf("Response Body: \n%s\n", body)
-	complete <- []string{strconv.Itoa(id), time.Now().String(), body} // signal that the routine has completed
+	complete <- []string{id, time.Now().String(), body} // signal that the routine has completed
 }
