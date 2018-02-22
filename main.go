@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strings"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -30,6 +31,7 @@ type config struct {
 	Port        string `json:"Port"`
 	Start       int    `json:"StartFile"`
 	End         int    `json:"EndFile"`
+	Location    string `json:"Location"`
 }
 
 var data = [][]string{}
@@ -44,10 +46,21 @@ func main() {
 
 	start := time.Now()
 
+	files, err := ioutil.ReadDir("files")
+    if err != nil {
+        log.Fatal(err)
+	}
+	totalFile:=0
+	fmt.Println("Total files are:",len(files))
+    for _, f := range files {
+		if strings.Contains(f.Name(),".txt"){
+			totalFile++;
+		}
+    }
 	//A main function
-	api.startRead(api.config[0].Start, api.config[0].End)
+	api.startRead(api.config[0].Start, files)
 
-	for i := api.config[0].Start; i <= api.config[0].End; i++ {
+	for i := 0; i < totalFile; i++ {
 		res := <-api.complete
 		data = append(data, res)
 	}
@@ -94,20 +107,22 @@ func readConfig() []config {
 
 //read files iterate over the files and read the file
 //It returns the slice of all the objects read from lower to upper in the format below
-func (api restAPI) startRead(lower int, upper int) {
-	//A chan where the data will be sent
+func (api restAPI) startRead(lower int, files []os.FileInfo) {
 	dataChan := make(chan string)
 	go api.handleData(dataChan)
-	for i := lower; i <= upper; i++ {
-		//Format to read the file
-		file := fmt.Sprintf("%s%d%s", "files/Fundraiser_", i, ".txt")
-		go api.readFile(file, dataChan)
-	}
+
+    for _, f := range files {
+		if strings.Contains(f.Name(),".txt"){
+			go api.readFile(f.Name(), dataChan)
+		}
+    }
 }
 func (api restAPI) readFile(file string, dataChan chan string) {
-	raw, err := ioutil.ReadFile(file)
+
+	fmt.Println("It is : ",api.config[0].Location+file)
+	raw, err := ioutil.ReadFile(api.config[0].Location+file)
 	if err != nil {
-		fmt.Println(err.Error)
+		fmt.Println(err)
 	}
 	dataChan <- string(raw)
 
@@ -130,6 +145,6 @@ func makeRequest(paylord string, endpoint string, apiKey string, contentType str
 	if err != nil {
 		fmt.Println(err)
 	}
-	// fmt.Printf("Response Body: \n%s\n", body)
+	fmt.Printf("Response Body: \n%s\n", body)
 	complete <- []string{strconv.Itoa(id), time.Now().String(), body} // signal that the routine has completed
 }

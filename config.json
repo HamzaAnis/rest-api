@@ -8,6 +8,7 @@
     "HostName": "",
     "Port": "",
     "StartFile": 900374,
-    "EndFile": 900377
+    "EndFile": 900377,
+    "Location": "files/"
   }
 ]
