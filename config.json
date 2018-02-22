@@ -3,12 +3,6 @@
     "APiEndPoint": "http://qa-sc-a-api.entertainmentbook.com.au/api/1.0/epic/fundraisers/",
     "ApiKey": "KIsPsSSPP0fCW61aQF0iKeTtoZaNDPQmwSEPXOu94Bae3oRPfbwn8H5s9OVt99XIjSNBavaqSrU57pGetN0KolJ1YwcNfkqhzKK6",
     "ContentType": "application/json",
-    "Schema": "",
-    "Username": "",
-    "HostName": "",
-    "Port": "",
-    "StartFile": 900374,
-    "EndFile": 900377,
     "Location": "files/"
   }
 ]
