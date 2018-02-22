@@ -1,13 +1,13 @@
 package main
 
 import (
-	"strings"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/parnurzeal/gorequest"
@@ -40,16 +40,16 @@ func main() {
 	start := time.Now()
 
 	files, err := ioutil.ReadDir("files")
-    if err != nil {
-        log.Fatal(err)
+	if err != nil {
+		log.Fatal(err)
 	}
-	totalFile:=0
-	fmt.Println("Total files are:",len(files))
-    for _, f := range files {
-		if strings.Contains(f.Name(),".txt"){
-			totalFile++;
+	totalFile := 0
+	fmt.Println("Total files are:", len(files))
+	for _, f := range files {
+		if strings.Contains(f.Name(), ".txt") {
+			totalFile++
 		}
-    }
+	}
 	//A main function
 	api.startRead(files)
 
@@ -67,8 +67,8 @@ func main() {
 
 func writeCsv() {
 	t := time.Now()
-	filename:=t.Format("201-02-21-01-01-52")
-	file, err := os.Create(filename+".csv")
+	filename := t.Format("201-02-21-01-01-52")
+	file, err := os.Create(filename + ".csv")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -100,34 +100,42 @@ func readConfig() []config {
 
 //read files iterate over the files in a directory
 func (api restAPI) startRead(files []os.FileInfo) {
-	dataChan := make(chan string)
+	dataChan := make(chan Call)
 	go api.handleData(dataChan)
 
-    for _, f := range files {
-		if strings.Contains(f.Name(),".txt"){
+	for _, f := range files {
+		if strings.Contains(f.Name(), ".txt") {
 			go api.readFile(f.Name(), dataChan)
 		}
-    }
+	}
 }
-func (api restAPI) readFile(file string, dataChan chan string) {
-	fmt.Println("Processing",api.config[0].Location+file)
-	raw, err := ioutil.ReadFile(api.config[0].Location+file)
+
+type Call struct {
+	id        string
+	payloarrd string
+}
+
+func (api restAPI) readFile(file string, dataChan chan Call) {
+	fmt.Println("Processing", api.config[0].Location+file)
+	raw, err := ioutil.ReadFile(api.config[0].Location + file)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	requestId:=strings.Split(file,"_")[1]
-	dataChan <- string(raw)
-	dataChan <- string(strings.Split(requestId,".")[0]) //Writing id to the chan
+	requestId := strings.Split(file, "_")[1]
 
+	comp := Call{
+		payloarrd:        string(raw),
+		id: string(strings.Split(requestId, ".")[0]),
+	}
+	dataChan <- comp
 
 }
-func (api restAPI) handleData(dataChan <-chan string) {
+func (api restAPI) handleData(dataChan <-chan Call) {
 	for {
 		select {
-		case paylord := <-dataChan:
-			ID := <-dataChan
-			go makeRequest(paylord, api.config[0].ApiEndPoint, api.config[0].ApiKey, api.config[0].ContentType, api.complete, ID)
+		case call := <-dataChan:
+			go makeRequest(call.payloarrd, api.config[0].ApiEndPoint, api.config[0].ApiKey, api.config[0].ContentType, api.complete, call.id)
 		}
 	}
 }
